@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Restaurant.AI Chatbot</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .chat-container {
+      width: 400px;
+      height: 600px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .chat-header {
+      background: #4b7bec;
+      padding: 15px;
+      color: white;
+      text-align: center;
+      font-weight: bold;
+    }
+    .chatbox {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+    }
+    .message {
+      margin-bottom: 10px;
+    }
+    .message.user {
+      text-align: right;
+    }
+    .message.bot {
+      text-align: left;
+    }
+    .chat-input {
+      display: flex;
+      border-top: 1px solid #ccc;
+    }
+    .chat-input input {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      outline: none;
+    }
+    .chat-input button {
+      background: #4b7bec;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      cursor: pointer;
+    }
+    .chat-input button:hover {
+      background: #3867d6;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">Restaurant.AI Chatbot</div>
+    <div class="chatbox" id="chatbox"></div>
+    <div class="chat-input">
+      <input type="text" id="userInput" placeholder="Type your message..." onkeydown="if(event.key==='Enter') sendMessage()" />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    // Generate or retrieve sessionId
+    let sessionId = localStorage.getItem("sessionId");
+    if (!sessionId) {
+      sessionId = Math.random().toString(36).substr(2, 9);
+      localStorage.setItem("sessionId", sessionId);
+    }
+
+    async function sendMessage() {
+      const inputElement = document.getElementById("userInput");
+      const input = inputElement.value.trim();
+      if (!input) return;
+
+      const chatbox = document.getElementById("chatbox");
+      chatbox.innerHTML += `<div class="message user"><strong>You:</strong> ${input}</div>`;
+      inputElement.value = "";
+      chatbox.scrollTop = chatbox.scrollHeight;
+
+      try {
+        const res = await fetch('https://saketruia.app.n8n.cloud/webhook/9d4acf4f-047e-423e-92e9-0ba5d77e87f8/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chatInput: input, sessionId: sessionId })
+        });
+
+        const data = await res.json();
+        const reply = data.output || "Sorry, I didn't understand that."; // Extracting 'output' field from the JSON response
+        chatbox.innerHTML += `<div class="message bot"><strong>Bot:</strong> ${reply}</div>`;
+        chatbox.scrollTop = chatbox.scrollHeight;
+      } catch (err) {
+        chatbox.innerHTML += `<div class="message bot"><strong>Bot:</strong> Error reaching server.</div>`;
+        chatbox.scrollTop = chatbox.scrollHeight;
+        console.error("Chat error:", err);
+      }
+    }
+  </script>
+</body>
+</html>
